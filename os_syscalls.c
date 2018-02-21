@@ -85,25 +85,23 @@ os_execve(const char *filename, char *const argv[], char *const envp[])
 }
 
 int
-chdir(const char *path)
+os_chdir(const char *path)
 {
 	return syscallext(12,
 		(unsigned long) path);
 }
 
-
 pid_t 
-fork(void)
+os_fork(void)
 {
 	return syscallext(2);
 }
 
 pid_t
-waitpid(pid_t pid, int *wstatus, int options)
+os_waitpid(pid_t pid, int *wstatus, int options)
 {
 	return syscallext(7,
 		(unsigned long) pid,
 		(unsigned long) wstatus,
 		(unsigned long) options);
 }
-
