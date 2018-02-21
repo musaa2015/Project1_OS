@@ -1,0 +1,65 @@
+
+# Assembly sources for back end services ("library"):
+ASRCS := startup32-jmp.S
+# ASRCS := startup32.S
+
+# C sources for back end services ("library"):
+BSRCS := my_lib.c os_syscalls.c
+
+# C sources for executables ("user programs"):
+ESRCS := hello-jmp.c mycat-jmp.c tokcount-jmp.c
+
+## Derived variables:
+
+# All C sources
+CSRCS := $(BSRCS) $(ESRCS)
+# Header files for C back end library
+BHDRS := $(BSRCS:%.c=%.h)
+
+# Assembly back end library object files
+SOBJS := $(ASRCS:%.S=%.o)
+# C back end libarry object files
+BOBJS := $(BSRCS:%.c=%.o)
+# Object files for executables
+EOBJS := $(ESRCS:%.c=%.o)
+# C sources object files combined set
+COBJS := $(BOBJS) $(EOBJS)
+# All object files
+OBJS := $(COBJS) $(SOBJS)
+
+# Intermediate assembly produced by the compiler gcc
+CASMS := $(CSRCS:%.c=%.s)
+# Executables to be built
+EXECS := $(ESRCS:%.c=%)
+
+# BASECFLAGS := -S -m32 -Wall -fno-asynchronous-unwind-tables -fno-dwarf2-cfi-asm -ffreestanding -nostdlib -nostdinc
+BASECFLAGS := -S -m32 -Wall -fno-asynchronous-unwind-tables -nostdlib
+MORECFLAGS := -fomit-frame-pointer -Os
+CFLAGS := $(BASECFLAGS)
+# CFLAGS := $(BASECFLAGS) $(MORECFLAGS)
+ASFLAGS := -32
+LDFLAGS := -melf_i386 -nostdlib
+
+.SUFFIXES:
+
+all: $(EXECS)
+
+## Static pattern rules for replacing builtin/implicit rule:
+$(EXECS) : % : $(SOBJS) $(BOBJS) %.o
+	ld $(LDFLAGS) -o $@ $^
+$(COBJS) : %.o : %.s
+	as $(ASFLAGS) -o $@ $^
+$(SOBJS) : %.o : %.S
+	as $(ASFLAGS) -o $@ $^
+$(CASMS) : %.s : %.c $(BHDRS)
+	gcc $(CFLAGS) -o $@ $<
+# See Secs 4.9, 4.10, Chapter 10 (esp 10.5) of GNU Make manual for Make v3.77
+
+.PHONY:	clean
+clean:
+	rm -f $(EXECS) $(OBJS) $(CASMS)
+
+.PHONY:	objclean
+objclean:
+	rm -f $(OBJS) $(CASMS)
+

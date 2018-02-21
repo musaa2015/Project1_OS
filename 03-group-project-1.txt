@@ -1,0 +1,343 @@
+
+          CSSE 4490 Winter 2018 : Project 1 - Due Feb 14
+          ==============================================
+
+   This is a unix systems programming project in C. However, you will
+   need to code at a very low level, without access to the standard
+   C library functions. A few functions (such as a rudimentary printf())
+   will be provided, forming a tiny library, that you can expand yourself.
+
+   Note: We are assuming a 32-bit i386/linux platform throughout.
+   If you are on 64-bit, consult the guide in [1]Web Post 1 to set up
+   32-bit runtime and cross-compiling development environment.
+
+Goal: Write a basic command line shell in standalone C
+------------------------------------------------------
+
+   Your shell should implement the following:
+
+     * Reading the command line typed in by the user, parse it into tokens,
+       and execute the command with all its arguments and with a reasonable
+       set of environment variable strings
+
+     * A cd command, where typing cd dirname should change current working
+       directory to dirname, and typing cd alone should change it to the
+       directory specified by the HOME environment variable
+
+     * Command pipelines: The user should be able to type in a sequence of
+       commands in the form:
+
+           cmd_1 | cmd_2 | . . . | cmd_n
+
+       where the standard output of each command is sent to the standard
+       output of the next command in the pipeline
+
+     * Path searching based on the PATH environment variable
+
+   Important: Your code must be standalone, which means that it must not
+   use the C library or any other external libraries, except for the ones
+   provided with the startup code base or those you develop yourself. 
+
+Sample standalone code base as startup for you
+----------------------------------------------
+
+   I am providing sample standalone source code (so that you can get started)
+   as a tarball [2]here (link fixed!), containing the following:
+
+     * Base library: startup32.S, os_syscalls.c, and my_lib.c. The other
+       programs will be based on these initial programs and you will need to
+       enlarge the code found in os_syscalls.c and my_lib.c as you progress
+       through the project.
+
+     * Several sample standalone utilities with source code, showing the use
+       of the base library (e.g. mycat.c, and more).
+
+     * Couple of "blackbox" program executables written as standalone
+       programs based on the base library, but without source code. You can
+       run them directly to observe their behavior, and also run them under
+       strace [-f] to observe their system calls.
+
+   Download the project [3]sample code base tarball.
+
+   Read the peoject's [4]README file.
+
+How to get started and prerequiste material
+-------------------------------------------
+
+   First read the [5]series of CSSE 4490 notes starting at [6]i386
+   architecture/assembly.
+
+   Then familiarize yourself with the source code in the project's
+   [7]sample code base, starting with its [8]README file.
+
+   Once you are familiar with these basic prerequistes, follow the
+   detailed steps below to progress through the project.
+
+   You will complete the project by adding your own source code to the
+   provided sample code base, expanding it to a point where you have
+   finished implementing the target goal mentioned above.
+
+Detailed steps for progressing through the project
+--------------------------------------------------
+
+   You can progress through the project using the following steps:
+
+    1. Start early and if you are stuck, get help from me ASAP.
+       As mentioned before, be sure to read the [9]series of CSSE 4490
+       notes.
+
+    2. For each sample program whose source code I have given, study the
+       source code carefully, making sure you understand how they work and
+       how they use the supplied code base and library.
+
+    3. For the sample "blackbox" programs whose source code I have not given,
+       run them and run them through strace [-f] to observe what they may be
+       doing (look up how strace -f works).
+
+    4. Use the supplied code base (startup32.S, os_calls.c, my_lib.c) to
+       write some basic standalone C programs. Examples of things you can
+       write:
+
+          * A program which prints its arguments separated by single spaces,
+            and followed by a single final newline (like /bin/echo).
+
+          * A program, call it showenv, which prompts the user for an
+            environment variable name, and prints its value if it exists in
+            the environment list. Test it by running this program as:
+
+              $ VAR=VALUE ./showenv
+
+            and making sure that your program prints the value of the
+            supplied environment variable (or an error message).
+
+    5. Learn all about the execve() system call. Then, in the source file
+       os_syscalls.c, add an os_execve() wrapper function which will run this
+       syscall.
+
+    6. Use your os_execve() function to write a standalone C program
+       runargcmd, which, when run, executes its first argument as an
+       executable file, with the remaining arguments passed to it as
+       arguments. E.g., running
+
+         $ ./runargcmd /bin/date -u -d tomorrow
+
+       should be equivalent to running the command
+
+         $ /bin/date -u -d tomorrow
+
+       directly in bash. What happens when you use your runargcmd to run the
+       date command as above but without giving its full path /bin/date? (For
+       now, we will have to use the full pathname of an executable to run it
+       under runargcmd.)
+
+    7. Write a program runlinecmd, which, when run, will:
+
+          * Read a line from STDIN to parse.
+
+          * Tokenize it into an array of C strings (pointers) and set up a
+            pointer to the pointers to these tokens.
+
+          * Execute this parsed command line (via your os_execve() function),
+            with the first token as the exectutable path name and the rest as
+            arguments, just as done in unix shells like bash
+
+       It would be prudent to separate your parsing function for later use
+       (e.g. put it in a different C file, or into my_lib.c)
+
+    8. Recall that every process has its own current working directory, or
+       CWD. Read about the chdir() syscall (man 2 chdir), and add a wrapper
+       function os_chdir() in os_syscalls.c which makes the chdir() syscall.
+
+    9. Write a cdandshow command which uses os_chdir() to implement changing
+       the CWD (within a process). Your program cdandshow, when run as
+       ./cdandshow dirname, should:
+
+          * Interpret the first argument (dirname) as a directory name
+
+          * Use your os_chdir() call to attempt to change the CWD to dirname
+
+          * If successful, then indicate so and execute /bin/pwd (via
+            os_execve()) to prove its success, else print an error message
+
+       Sample testing output from the bash shell:
+
+         $ /bin/pwd
+         /usr/bin
+         $ ./cdandshow nonexistentdirectory
+         Error:  Could not cd to "nonexistentdirectory"
+         $ ./cdandshow /tmp
+         Success, new CWD: /tmp
+         $ /bin/pwd
+         /usr/bin
+
+       Why was the last /bin/pwd output still /usr/bin and not /tmp?
+
+   10. Learn about fork() and waitpid() syscalls, and add os_fork()
+       os_waitpid() wrapper functions for them in os_syscalls.c
+
+   11. Write your first basic shell which implements a builtin cd command,
+       but not pipelines or other features. It should:
+
+          * Priint a prompt string, and then repeatedly read lines from the
+            user and parse them to execute commands, handling errors, and
+            printing the prompt after every step.
+
+          * Have a builtin cd command which should attempt to change CWD to
+            the specified directory. If no directory is specified (user just
+            types cd by itself), then attempt to change CWD to the one
+            specified in the HOME=... environment string (if that string
+            exists).
+
+       Run the supplied test shell to see an example of what is expected.
+
+   12. Learn about the system calls pipe(), dup2(), and close(), and then
+       update os_syscalls.c with corresponding wrapper functions.
+
+   13. Write a program which will input two lines from the user, interpret
+       each line as a program to be run, and then fork/exec both programs
+       such that the output of the first program is piped to the input of the
+       second program (a blackbox is provided!)
+
+   14. Write a test program which:
+
+          * Inputs a number of lines from the user (after entering the last
+            line, the user will need to type the terminal's EOF character,
+            usually Control-D, to indicate end of input)
+
+          * Interprets each line as a program to be run (with arguments)
+
+          * Then fork/exec all programs such that the standard output of each
+            program is piped to the standard input of the next program
+
+   15. Write a command interpreter shell which implements command pipelines.
+       The user should be able to type in a sequence of commands in the form:
+
+         cmd_1 [args1] | cmd_2 [args2] | . . . | cmd_n [args2]
+
+   16. Implement path searching for executables in your shell: Replace each
+       os_execve() call in your code with a library wrapper function
+       my_execvpe() in my_lib.c, which has the same format as os_execve(),
+       but behaves like the C library function execvpe() (consult man 3
+       execvpe), so that:
+
+          * If the first argument specifed to my_execvpe() (executable path
+            name) contains the slash (/) chracter, then simply call
+            os_execve() verbatim, passing all three arguments unmodified
+
+          * If the first argument does not contain the slash (/) character,
+            then repeatedly call os_execve(), each time prefixing the
+            executable path name string with a directory name found in the
+            PATH=... environment variable
+
+   List of new system calls (outside the ones used in the sample code base)
+   that you will be using: execve(), chdir(), fork(), waitpid(), dup2(), and
+   pipe().
+
+Useful references
+-----------------
+
+   Unix systems programming requires C programming, with heavy use of
+   pointers and structures. Knowing C++/Java may not be enough!
+
+   If you are not already familiar with C programming, then you will need two
+   references, one for C, and one for unix systems programming:
+
+   The two best books for unix systems programming and C are (I find them
+   indispensible):
+
+    1. Advanced Programming in the UNIX Environment, by W. Richard Stevens.
+       Published by Addison-Wesley. In the later editions (after the death of
+       Stevens), Stephen A. Rago is a second author. [10]Link to 3rd ed at
+       Amazon
+
+       Commonly known as `APUE', this is an absolute classic! Any edition
+       should still be OK (I own only the first edition from 1992, which I
+       worked through back in 1995, but that material is still completely
+       applicable to modern linux/unix, with only minor adjustments needed).
+
+       Alternatives. Another excellent old book is Unix System Programming,
+       by Keith Haviland and others, now OOP but cheap used copies may be
+       [11]available at Amazon. Finally, a very recent comprehensive book
+       with excellent reviews is The Linux Programming Interface, by Michael
+       Kerrisk ([12]Link to Amazon). Any one of these three books will work
+       as reference for unix system programming. (In theory, it may be
+       possible to do this project without reading any systems programming
+       book by getting all the information from sections 2 and 3 of the linux
+       man pages!)
+
+    2. The C Programming Language, 2nd Ed, by Kernighan and Ritchie.
+       Published by Prentice-Hall. [13]Link to Amazon.
+
+       The ultimate in C programming, commonly known as `K&R'. However, if
+       you are already very strong in C programming (I mean C, not C++!),
+       particularly in pointers and structures, then you don't need a book on
+       C programming.
+
+Coding style for writing C code: K&R
+------------------------------------
+
+   Follow these conventions in your C code (adapted from MIT OS course):
+
+     * No space after the name of a function in a call:
+       printf("hello") not printf ("hello").
+
+     * One space after keywords (if, for, while, switch). For example,
+       if (x) not if(x).
+
+     * One space after semicolons. For example, for(j = 0; j < n; j++),
+       not for(j = 0;j < n;j++) nor for(j=0;j<n;j++).
+
+     * Space before braces. For example, if (x) { not if (x){.
+
+     * Function names are all lower-case (underscore separarors may be used).
+
+     * Beginning-of-line indentation via tabs, not spaces.
+
+     * Pointer types have spaces. For example, in a cast, use: (uint16_t *)
+       not (uint16_t*). In a declaration, use uint32_t *p, not uint32_t* p
+       nor uint32_t * p.
+
+     * Multi-word names are lower_case_with_underscores.
+
+     * K&R style braces. For braces within a function body (scoping if, for,
+       while, switch), use the style
+
+           if (x == 0) {
+                   . . .
+           }
+
+       and write functions as:
+
+         int
+         foo(void)
+         {
+             . . .
+         }
+
+       The function name starts a new line, so that you can grep '^foo' *.c
+       to find the definition of foo.
+
+     * Functions that take no arguments are declared f(void) not f().
+
+     * When using gcc to compile C code, always add the -Wall flag.
+
+   Back to [14]Web Post 1.
+
+References
+----------
+
+   1. http://dasgupab.faculty.udmercy.edu/csse-4490/2018-winter/webpost-01/index.html
+   2. http://dasgupab.faculty.udmercy.edu/csse-4490/2018-winter/webpost-01/code-base-for-project-1.tgz
+   3. http://dasgupab.faculty.udmercy.edu/csse-4490/2018-winter/webpost-01/code-base-for-project-1.tgz
+   4. http://dasgupab.faculty.udmercy.edu/csse-4490/2018-winter/webpost-01/01-README
+   5. http://dasgupab.faculty.udmercy.edu/csse-4490/2018-winter/webpost-01/i386-arch-summary.html
+   6. http://dasgupab.faculty.udmercy.edu/csse-4490/2018-winter/webpost-01/i386-arch-summary.html
+   7. http://dasgupab.faculty.udmercy.edu/csse-4490/2018-winter/webpost-01/code-base-for-project-1.tgz
+   8. http://dasgupab.faculty.udmercy.edu/csse-4490/2018-winter/webpost-01/01-README
+   9. http://dasgupab.faculty.udmercy.edu/csse-4490/2018-winter/webpost-01/i386-arch-summary.html
+  10. https://www.amazon.com/Advanced-Programming-UNIX-Environment-3rd/dp/0321637739
+  11. https://www.amazon.com/Unix-System-Programming-Keith-Haviland/dp/0201877589/
+  12. https://www.amazon.com/Linux-Programming-Interface-System-Handbook/dp/1593272200/
+  13. https://www.amazon.com/dp/0131103628
+  14. http://dasgupab.faculty.udmercy.edu/csse-4490/2018-winter/webpost-01/index.html
+

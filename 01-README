@@ -1,0 +1,263 @@
+***************************************
+*** CSSE 4490 Project 1 README file ***
+***************************************
+
+1. Startup codes, in i386 assembly
+==================================
+
+Files:  startup32-jmp.S startup32.S
+
+The purpose of each of these two assembly files is to provide the
+main C program with the argc/argv/envp parameters put on stack
+by the kernel, but the two startup codes use two different
+(and incompatible) methods for that.
+
+Both startup codes use two important special symbols:
+
+_start :    This is where execution begins (entry address in ELF32
+            executable, which will be set by the build tool ld)
+
+mainprog :  The main C function name, where the real code lies
+            (the main C source files should have a unique C function
+            named mainprog)
+
+The difference between the two startup methods:
+
+(A) startup32-jmp.S
+
+    This startup code loads three agreed upon C global variables
+
+        int my_argc; char **my_argv, **my_envp;
+
+    with the argc/argv/envp values found on stack as provided by the
+    kernel at program startup.  The C program simply allocates these
+    three global variables, and will then enjoy having them ready for
+    use, already initialized by startup32-jmp.S.  Control never
+    returns from the main C code to startup32-jmp.S, so the main
+    C code must take care of program termination using the exit()
+    system call.  Since the main C function does not return and
+    does not take any argument from the stack, it must be defined as:
+
+        void mainprog(void) { ... };
+
+(B) startup32.S
+
+    This startup code uses the more traditional C calling method
+    where it pushes the argc/argv/envp (set up by the kernel at
+    program startup) on to the stack and then calls the main C
+    function using the call instruction.  The main C function
+    will then find these parameters as its function arguments.
+    When the main function is done, control returns back to
+    startup32.S, which will then perform the work of calling
+    the exit() syscall, with the int value returned by the
+    main C program (found in register %eax) as the exit code.
+
+    No global C variables are needed, and the main function
+    can be one of the following forms (0 to 3 arguments):
+
+        int mainprog(void);
+        int mainprog(int argc);
+        int mainprog(int argc, char **argv);
+        int mainprog(int argc, char **argv, char **envp);
+
+
+2. The back-end "C library" functions
+=====================================
+
+Files:  os_syscalls.c os_syscalls.h my_lib.c my_lib.h
+
+The .h files are just header files for #including from other
+C code files.
+
+- File os_syscalls.c :  This file contains C wrapper functions
+  for making system calls in a portable fashion, similar
+  to such functions in the C library (man pages section 2).
+
+  The point is same as the one of the standard C library:
+  We do not want to use direct assembly for syscalls, since
+  the syscall numbers and the calling convention changes
+  across hardware and OS versions.  Once we have C wrapper
+  functions, e.g. `int os_exit(int exitcode)', we don't
+  have to remember facts like the hard syscall numer and
+  which registers hold which required argument.  Moreover,
+  if the hardware / OS version changes the syscall calling
+  mechanism, we will only have to change this file, and
+  the rest of the programs will function properly.
+
+  The actual system call is done via an assembly back-end
+  function syscallext() which simply loads %eax, %ebx, %ecx, %edx
+  and then calls int 0x80, returning the value found in %eax.
+
+  Five wrapper functions are already provided (see os_syscalls.h),
+  and you will have to extend these files by adding more syscalls.
+  (See project instruction file.)
+
+  When adding a new syscall wrapper function, please use the
+  naming convention of prefixing the function name with `os_'.
+
+- File my_lib.c :  This file, adapted from the GNU multiboot
+  specification document, contains a couple of rudimentary
+  utility functions for use by user programs.  Its purpose is
+  similar to that of the standard C library (man pages section 3).
+  At distribution it just contains two functions:
+
+    int my_strcmp(char *ptr, char *ref);
+    void my_fprintf (int fd, const char *format, ...);
+
+  You can add more functions, just use the naming convention
+  of prefixing these function names with `my_'.
+
+
+3. The sample user programs with source code
+============================================
+
+There are three user programs with C source code provided:
+
+  - hello
+  - mycat
+  - tokcount
+
+Read their C source files for information.
+
+Each user program comes with two version, one meant to be started
+by the startup32-jmp.S code (these user programs have source files
+named in the form foo-jmp.c), and another meant to be started by the
+traditional startup32.S code (their source files are named in the
+form *.c, without any -jmp part).
+
+
+4. Sample blackbox programs without source code
+===============================================
+
+Read Project 1 website as well.  I am providing five blackbox programs:
+
+- runargcmd  :  Execute first arg as a command with rest as arguments to it
+- runlinecmd :  Execute one command line from STDIN, parsing into tokens
+- cdandshow  :  cd to user specified directory and test by /bin/pwd
+- tshell     :  Simple shell (no pipelining)
+- pipetwo    :  Input two command lines and run them as a pipeline,
+                with output of first command piped into the second
+
+
+5. Build commands: Compiling, Assembling, and Linking
+=====================================================
+
+The build process uses the following steps:
+
+  - Compiling:  The gcc C compiler converts each C file
+    foo.c to the corresponding assembly file foo.s as follows:
+    
+      gcc -S -m32 -Wall -nostdlib -o foo.s foo.c
+
+    The startup32-jmp.S and startup32.S are already in assembly,
+    so we do not need to compile them.
+
+    At this point, all our source code is in assembly language,
+    we don't have machine code yet.
+
+    We will use the convention of using .S suffix for human
+    written assembly files, and the .s suffix for compiler
+    generated assembly files.
+
+  - Assembling:  The GNU assembler as converts each assembly file
+    (of the form .S or .s) to machine code as follows:
+
+      as -32 -o foo.o foo.S
+      as -32 -o bar.o bar.s
+
+    The resulting machine code file foo.o is called an object file,
+    which contains the instructions in binary form, but the memory
+    addresses have not been resolved yet.
+
+  - Linking:  The GNU linker ld combines all the object files with
+    machine code instructions (but without actual memory addresses)
+    into a single ELF32 executable in which correct memory addresses
+    are placed.  This is done as follows:
+
+      ld -melf_i386 -nostdlib -o program program.o \
+          startup32.o os_syscalls.o my_lib.o
+
+For example, to build the mycat program, run:
+
+  gcc -S -m32 -Wall -nostdlib -o os_syscalls.s os_syscalls.c
+  gcc -S -m32 -Wall -nostdlib -o my_lib.s my_lib.c
+  gcc -S -m32 -Wall -nostdlib -o hello.s hello.c
+
+  as -32 -o startup32.o startup32.S
+  as -32 -o os_syscalls.o os_syscalls.s
+  as -32 -o my_lib.o my_lib.s
+  as -32 -o hello.o hello.s
+
+  ld -melf_i386 -nostdlib -o hello startup32.o os_syscalls.o my_lib.o hello.o
+
+(The build commands for startup32/os_syscalls/my_lib do not have to be
+redone unless you change their source code.)
+
+The above will build the mycat program, which uses the startup32.S
+code for startup.
+
+To build the mycat-jmp program, which uses the startup32-jmp.S code, run:
+
+  gcc -S -m32 -Wall -nostdlib -o os_syscalls.s os_syscalls.c
+  gcc -S -m32 -Wall -nostdlib -o my_lib.s my_lib.c
+  gcc -S -m32 -Wall -nostdlib -o hello-jmp.s hello-jmp.c
+
+  as -32 -o startup32-jmp.o startup32-jmp.S
+  as -32 -o os_syscalls.o os_syscalls.s
+  as -32 -o my_lib.o my_lib.s
+  as -32 -o hello-jmp.o hello-jmp.s
+
+  ld -melf_i386 -nostdlib -o hello-jmp \
+    startup32-jmp.o os_syscalls.o my_lib.o hello-jmp.o
+
+
+6. Using the makefiles
+======================
+
+The most convenient way to run the above chains of build commands
+is to automate them using the GNU make tool.  Two such makefiles
+are provided,
+
+  Makefile.i386
+  Makefile-jmp.i386
+
+Run them as:  make -f <makefile> [target]
+
+Choose the makefile based on the startup method you want, Makefile.i386
+for startup32.S and Makefile-jmp.i386 for for startup32-jmp.S.
+
+For example, to build the mycat program (target), run:
+
+  make -f Makefile.i386 mycat
+
+This will run precisely those build commands to build the target mycat.
+You can clean your build completely by running:
+
+  make -f Makefile.i386 clean
+
+Any other valid target in the build chain can be specified.  E.g.,
+if you want to build the my_lib.o library object file (which has the
+machine code for the library functions in my_lib.c), run:
+
+  make -f Makefile.i386 my_lib.o
+
+This will only run the minimum build commands for building my_lib.o,
+without building any executables or other object files.
+
+If you do not specify any target, make will build all targets.
+
+*** Learning tips ***
+
+- Before cleaning your build, you can look at how the compiler
+  is generating its assembly code from C source files, e.g. take
+  a look at the hello.s file.  (Recall that the .S suffix is for
+  human written assembly files, and the .s suffix is for compiler
+  generated assembly files.)
+
+- You can also try to disassemble the machince code in the object
+  or executable files using objdump:
+
+    objdump -d hello
+    objdump -d os_syscalls.o
+    objdump -d my_lib.o
+

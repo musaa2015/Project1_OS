@@ -1,0 +1,48 @@
+Coding style for writing C code: K&R
+------------------------------------
+
+Follow these conventions in your C code (adapted from MIT OS course):
+
+  * No space after the name of a function in a call:
+    printf("hello") not printf ("hello").
+
+  * One space after keywords (if, for, while, switch).  For example,
+    if (x) not if(x).
+
+  * One space after semicolons.  For example, for(j = 0; j < n; j++),
+    not for(j = 0;j < n;j++) nor for(j=0;j<n;j++).
+
+  * Space before braces.  For example, if (x) { not if (x){.
+
+  * Function names are all lower-case (underscore separarors may be used).
+
+  * Beginning-of-line indentation via tabs, not spaces.
+
+  * Pointer types have spaces.  For example, in a cast, use: (uint8_t *)
+    not (uint8_t*). In a declaration, use uint32_t *p, not uint32_t* p
+    nor uint32_t * p.
+
+  * Multi-word names are lower_case_with_underscores.
+
+  * K&R style braces.  For braces within a function body (scoping if, for,
+    while, switch), use the style
+
+      if (x == 0) {
+          . . .
+      }
+
+    and write functions as:
+
+      int
+      foo(void)
+      {
+          . . .
+      }
+
+    The function name starts a new line, so that you can grep '^foo' *.c
+    to find the definition of foo.
+
+  * Functions that take no arguments are declared f(void) not f().
+
+  * When using gcc to compile C code, always add the -Wall flag.
+

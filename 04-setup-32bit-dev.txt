@@ -1,0 +1,69 @@
+
+Setup 32bit environment, install QEMU, and test
+===============================================
+
+(From [1]CSSE 4490 Winter 2018, Web Post 1)
+
+   Setting up 32bit runtime/development environment on 64bit Debian/Ubuntu:
+
+    1. 32bit runtime setup
+
+          * sudo dpkg --add-architecture i386
+
+          * sudo apt-get update
+
+          * May also need to do: sudo apt-get install multiarch-support
+
+          * sudo apt-get install libc6:i386 libncurses5:i386 libstdc++6:i386
+
+    2. 32bit dev setup (cross-compiling/linking via gcc/as/ld)
+
+          * sudo apt-get install gcc-multilib
+
+          * May also need: sudo apt-get install gcc-6-multilib
+
+    3. Install QEMU x86
+
+          * sudo apt-get install qemu-system-x86
+
+    4. Test 32bit runtime setup and QEMU
+
+          * Download this file
+
+              [2]testkernel00
+
+            on to your linux machine.  Or use the local file
+
+              ./05-testkernel00.
+
+            Both have MD5 hash:  a872508746a33c6018bd7d9cba5e8510
+
+          * Run:
+
+              qemu-system-i386 -m 2M -machine pc-1.0 -kernel testkernel00
+
+            This should run the test kernel on the qemu virtual machine (with
+            only 2 megabytes of RAM) and show the message:
+
+         *** CSSE 4490 multiboot 32bit kernel load test ***
+
+    5. Test 32bit dev setup
+
+          * Cross-compile some simple C programs with the -m32 flag added to
+            gcc which should produce a 32bit target:
+
+              gcc -m32 -Wall -o hello hello.c
+
+            You should be able to compile without errors using the -m32 flag
+            to gcc.
+
+          * Running the file program on the resulting output file (as in file
+            hello) should report an ELF32 executable, not ELF64.
+
+References
+----------
+
+   1. http://dasgupab.faculty.udmercy.edu/csse-4490/2018-winter/webpost-01/index.html
+   2. http://dasgupab.faculty.udmercy.edu/csse-4490/2018-winter/webpost-01/testkernel00
+
+
