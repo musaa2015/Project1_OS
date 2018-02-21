@@ -105,4 +105,3 @@ os_waitpid(pid_t pid, int *wstatus, int options)
 		(unsigned long) wstatus,
 		(unsigned long) options);
 }
-
