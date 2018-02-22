@@ -76,29 +76,34 @@ os_open(char *pathname, int flags, int mode)
 }
 
 int
-os_execve(const char *filename, char *const argv[], char *const envp[])
+os_execve(char *filename, char *argv[], char *envp[])
 {
 	return syscallext(11,
 		(unsigned long) filename,
-		(unsigned long) flags,
+		(unsigned long) argv,
 		(unsigned long)	envp);
 }
 
 int
-os_chdir(const char *path)
+os_chdir(char *path)
 {
 	return syscallext(12,
-		(unsigned long) path);
+		(unsigned long) path,
+		0,
+		0);
 }
 
-pid_t 
+int 
 os_fork(void)
 {
-	return syscallext(2);
+	return syscallext(2,
+	0,
+	0,
+	0);
 }
 
-pid_t
-os_waitpid(pid_t pid, int *wstatus, int options)
+int
+os_waitpid(int pid, int *wstatus, int options)
 {
 	return syscallext(7,
 		(unsigned long) pid,

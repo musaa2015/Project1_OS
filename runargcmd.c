@@ -1,22 +1,29 @@
+/*
+
+runargcmd.c
+
+Sample standalone C program baed on startup32.S, os_syscalls.c, and my_lib.c
+
+This version is to be called from startup32.S, with arguments
+on the stack, so the main function form can be one of:
+
+  int mainprog(void);
+  int mainprog(int argc);
+  int mainprog(int argc, char **argv);
+  int mainprog(int argc, char **argv, char **envp);
+
+Build commands:
+
+   gcc -m32 -Wall -nostdlib -o runargcmd runargcmd.c startup32.S os_syscalls.c my_lib.c
+
+
+*/
 
 #include "os_syscalls.h"
 #include "my_lib.h"
 
-#define MAXLEN 256
-char buf[MAXLEN];
-
-int mainprog(void)
+int mainprog(int argc, char **argv)
 {
-	int r, pid, status;
-	char *arglist[2], *evlist[2];
-	envlist[0] = (char *)0;
-
-	while((r=read(0,buf, MAXLEN)) > 0){
-	
-		write(1,">",1);
-		buf[r-1] = '\0';
-
-		pid = os_fork()
-
-	}
+	os_execve(*(argv+1), argv+1, 0);
+	return 0;
 }
