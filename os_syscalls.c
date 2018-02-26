@@ -115,7 +115,7 @@ int
 os_pipe(int pipefd[2])
 {
 	return syscallext(42,
-		(unsigned long) pipefd[2],
+		(unsigned long) pipefd,
 		0,
 		0);
 }
