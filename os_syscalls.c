@@ -110,3 +110,30 @@ os_waitpid(int pid, int *wstatus, int options)
 		(unsigned long) wstatus,
 		(unsigned long) options);
 }
+
+int
+os_pipe(int pipefd[2])
+{
+	return syscallext(42,
+		(unsigned long) pipefd,
+		0,
+		0);
+}
+
+int
+os_dup2(int oldfd, int newfd)
+{
+	return syscallext(63,
+		(unsigned long) oldfd,
+		(unsigned long) newfd,
+		0);
+}
+
+int
+os_close(int fd)
+{
+	return syscallext(6,
+		(unsigned long) fd,
+		0,
+		0);
+}
