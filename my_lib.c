@@ -239,3 +239,24 @@ my_fprintf (int fd, const char *format, ...)
 	}
 	fdputchar(fd, 0, 1); /* flush */
 }
+
+char
+**tokenize(char line)
+{
+		int tokenCount=0, character=0, i=0;
+		**char tokens;
+		
+		while(line[character] != '\0'){
+			for(int i = 0; line[character] != " "; i++){
+				tokens[tokenCount][i] = line[character];
+				character++;
+			}
+			if(line[i] == " "){
+				tokens[tokenCount][i] = '\0';
+				tokenCount++;
+				character++;
+			}
+		}
+		
+		return tokens;
+}
