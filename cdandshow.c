@@ -26,7 +26,7 @@ int mainprog(int argc, char **argv)
 		os_execve(*pwd, pwd, '\0');
 	}
 	else{
-		os_write(1,"Error: could not cd \n",21);
+		my_fprintf(1,"Error: could not cd to %s.\n",*(argv+1));
 	}
 	return 0;
 }
