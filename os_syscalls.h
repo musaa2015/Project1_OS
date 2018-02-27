@@ -17,4 +17,3 @@ int os_fork(void);
 int os_waitpid(int pid, int *wstatus, int options);
 int os_pipe(int pipefd[2]);
 int os_dup2(int oldfd, int newfd);
-int os_close(int fd);

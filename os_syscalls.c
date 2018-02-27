@@ -128,12 +128,3 @@ os_dup2(int oldfd, int newfd)
 		(unsigned long) newfd,
 		0);
 }
-
-int
-os_close(int fd)
-{
-	return syscallext(6,
-		(unsigned long) fd,
-		0,
-		0);
-}
