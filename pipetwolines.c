@@ -30,9 +30,6 @@ mainprog(void)
 	int k, r, ret, fd[2], status, pidA, pidB;
 	char *progA, *progB, *arglistA[2], *arglistB[2], *envlist[1];
 
-	/* First get two program names in two lines from user.  This code
-	   neither does path searching (so full program pathnames are needed)
-	   nor supports arguments to programs */
 
 	my_fprintf(2, "Enter the full path to the writer program:\n");
 	if ((r = os_read(0, bufprognames, MAXLEN)) <= 0)
@@ -43,7 +40,7 @@ mainprog(void)
 	}
 	bufprognames[r-1] = '\0';
 	progA = bufprognames;
-	k = r;	/* Save buffer position index */
+	k = r;
 
 	my_fprintf(2, "Enter the full path to the reader program:\n");
 	if ((r = os_read(0, bufprognames + k, MAXLEN - k)) <= 0)
@@ -78,17 +75,21 @@ mainprog(void)
 	if (pidB < 0)
 		os_exit(-pidB);
 
-	if (pidB == 0) {	/* Child to execve the reader program (progB) */
-		os_close(fd[1]);	/* Reader won't need the write end */
+	/* Child to execve the reader program (progB) */
+	if (pidB == 0) {	
+		os_close(fd[1]);
+		/* Reader won't need the write end */
 		/* If the read end fd is already numbered 0 we can execve(progB) now,
 		   else we will force it to become the number 0, using dup2() */
 		if (fd[0] != 0) {
 			os_dup2(fd[0], 0);
 			os_close(fd[0]);
 		}
-		os_execve(progB, arglistB, envlist); /* Won't return if successful */
+		os_execve(progB, arglistB, envlist); 
+		/* Won't return if successful */
 		my_fprintf(2, "Err:  execve(\"%s\") failed!\n", progB);
-		os_exit(-1); /* Child doesn't execute code outside this block */
+		os_exit(-1); 
+		/* Child doesn't execute code outside this block */
 	}
 
 	/* In the parent again */
@@ -97,16 +98,20 @@ mainprog(void)
 	pidA = os_fork();
 	if (pidA < 0)
 		os_exit(-pidA);
-
-	if (pidA == 0) {	/* Child to execve the writer program (progA) */
-		os_close(fd[0]);	/* Writer won't need the read end */
-		if (fd[1] != 1) {	/* If necessary, dup2() the write end fd to 1 */
+	
+	/* Child to execve the writer program (progA) */
+	if (pidA == 0) {	
+		/* Writer won't need the read end */
+		os_close(fd[0]);
+		/* If necessary, dup2() the write end fd to 1 */		
+		if (fd[1] != 1) {	
 			os_dup2(fd[1], 1);
 			os_close(fd[1]);
 		}
 		os_execve(progA, arglistA, envlist);
 		my_fprintf(2, "Err:  execve(\"%s\") failed!\n", progA);
-		os_exit(-1); /* Child doesn't execute code outside this block */
+		os_exit(-1); 
+		/* Child doesn't execute code outside this block */
 	}
 
 	/* Clean up */
