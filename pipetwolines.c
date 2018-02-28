@@ -21,11 +21,11 @@ mainprog(void)
 	char *progA, *progB, *envlist[1];
 
 
-	my_fprintf(2, "Enter the full path to the writer program followed by arguments:\n");
+	my_fprintf(1, "Enter the full path to the writer program followed by arguments:\n");
 	if ((r = os_read(0, bufprognames, MAXLEN)) <= 0)
 		os_exit(-r);
 	if (bufprognames[r - 1] != '\n') {
-		my_fprintf(2, "Line buffer overflow\n");
+		my_fprintf(1, "Line buffer overflow\n");
 		os_exit(-1);
 	}
 	bufprognames[r-1] = '\0';
@@ -36,7 +36,7 @@ mainprog(void)
 	if ((r = os_read(0, bufprognames + k, MAXLEN - k)) <= 0)
 		os_exit(-r);
 	if (bufprognames[k + r - 1] != '\n') {
-		my_fprintf(2, "Line buffer overflow\n");
+		my_fprintf(1, "Line buffer overflow\n");
 		os_exit(-1);
 	}
 	bufprognames[k + r - 1] = '\0';
@@ -72,7 +72,7 @@ mainprog(void)
 		}
 		os_execve(progB, tokenList, envlist); 
 		/* Won't return if successful */
-		my_fprintf(2, "Error:  execve(\"%s\") failed!\n", progB);
+		my_fprintf(1, "Error:  execve(\"%s\") failed!\n", progB);
 		os_exit(-1); 
 		/* Child doesn't execute code outside this block */
 	}
@@ -101,7 +101,7 @@ mainprog(void)
 			os_close(fd[1]);
 		}
 		os_execve(progA, tokenList, envlist);
-		my_fprintf(2, "Error:  execve(\"%s\") failed!\n", progA);
+		my_fprintf(1, "Error:  execve(\"%s\") failed!\n", progA);
 		os_exit(-1); 
 		/* Child doesn't execute code outside this block */
 	}
