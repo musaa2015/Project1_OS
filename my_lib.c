@@ -239,3 +239,40 @@ my_fprintf (int fd, const char *format, ...)
 	}
 	fdputchar(fd, 0, 1); /* flush */
 }
+
+#define MAXTOKENS 1024
+char *tokenList[MAXTOKENS];
+
+int
+tokenize(char *line)
+{
+	int tokens = 0; 
+    	char *pointer = line;
+		
+    	while(*pointer != '\0'){		
+        	while (*pointer == ' ')
+           		pointer++;
+				 
+		if (*pointer == '\0') 
+           		 break;
+	
+		tokenList[tokens] = pointer;
+        	tokens++;
+			
+        	if (tokens >= MAXTOKENS){
+				my_fprintf(1,"Error: number of arguments exceeds %i.", MAXTOKENS);
+				os_exit(-1);	
+		}
+
+		
+        	while (*pointer != ' ' && *pointer != '\0')
+            		pointer++;
+
+        	if (*pointer == '\0')
+            		break;
+
+        	*pointer = '\0';
+        	pointer++;
+    	}
+	return tokens;
+}

@@ -8,3 +8,4 @@ User library functions (like the C library)
 
 int my_strcmp(char *ptr, char *ref);
 void my_fprintf (int fd, const char *format, ...);
+int tokenize(char *line);
